@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>SOBREVIVA</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="game-container">
+
+        <!-- =========================
+                MENU PRINCIPAL
+        ========================== -->
+
+        <section id="menu" class="screen active">
+
+            <h1>SOBREVIVA</h1>
+
+            <p class="subtitle">
+                Quanto tempo você consegue sobreviver?
+            </p>
+
+            <div class="mode-select">
+                <button id="modoNormalButton" class="modo-btn active">NORMAL</button>
+                <button id="modoDificilButton" class="modo-btn">DIFÍCIL</button>
+            </div>
+            <p class="mode-desc" id="modeDesc">Sobrevivência clássica: inimigos e boss aparecem com o tempo.</p>
+
+            <button id="startButton">
+                JOGAR
+            </button>
+
+            <button id="instructionsButton">
+                INSTRUÇÕES
+            </button>
+
+            <p class="record-menu">
+                🏆 Recorde:
+                <span id="menuHighScore">0</span>
+            </p>
+
+        </section>
+
+
+        <!-- =========================
+                TELA DE INSTRUÇÕES
+        ========================== -->
+
+        <section id="instructions" class="screen">
+
+            <h2>COMO JOGAR</h2>
+
+            <div class="instructions-box">
+
+                <p>
+                    🎮 <strong>WASD / Setas:</strong>
+                    movimentar o personagem
+                </p>
+            
+                <p>
+                     🎮 <strong>1,2,3,4,5,6 e 7:</strong>
+                    Mudar entre as armas (Pistola,Escopeta,Rifle,Fuzil de assalto,Canhão perfurador,Metraladora e Canhão Perfurador duplo)
+                </p>
+
+                <p>
+                    🖱️ <strong>Mouse:</strong>
+                    mirar
+                </p>
+
+                <p>
+                    🔫 <strong>Clique esquerdo:</strong>
+                    atirar
+                </p>
+
+                <p>
+                    ⏸️ <strong>P / ESC:</strong>
+                    pausar o jogo
+                </p>
+
+                <p>
+                    ❤️ <strong>Objetivo:</strong>
+                    sobreviver o máximo possível
+                </p>
+
+                <p>
+                    ⭐ Elimine inimigos para ganhar pontos.
+                </p>
+
+                <p>
+                    💊 Power-ups: ❤ recupera 1 coração, ⚡ aumenta a velocidade, 💥 explode os inimigos ao redor e 🔫 recarrega toda a munição (modo Difícil).
+                </p>
+
+                <p>
+                    👹 Inimigos especiais são mais fortes. Tanques, Atiradores e Bosses atiram em você.
+                </p>
+
+                <p>
+                    📈 A cada Boss derrotado o nível sobe e a dificuldade aumenta sozinha.
+                </p>
+
+                <p>
+                    🔫 <strong>Upgrade de arma:</strong> ao derrotar um Boss (nos dois modos), escolha 1 de 3 armas novas sorteadas — todas mais fortes que a pistola inicial.
+                </p>
+
+                <p>
+                    👑 Um Boss aparece a cada 5 minutos
+                    de sobrevivência.
+                </p>
+
+                <p>
+                    🔥 <strong>Modo DIFÍCIL:</strong> munição limitada (só recarrega pegando o power-up 🔫 ou derrotando um Boss), inimigos chegam em hordas, um novo tipo é liberado a cada 3 hordas e um Boss aparece a cada 5 hordas.
+                </p>
+
+                <p>
+                    ⚡ <strong>Clique direito perto de um Boss</strong> para desbloquear um Golpe Devastador
+                    (15% da vida do Boss). Depois de usado, precisa recarregar no minimo por 25 segundos.
+                </p>
+
+            </div>
+
+            <button id="backButton" class="back-btn">
+                ⬅ VOLTAR
+            </button>
+
+        </section>
+
+
+        <!-- =========================
+                JOGO
+        ========================== -->
+
+        <section id="gameScreen" class="screen">
+
+            <div id="hud">
+
+                <div class="hud-item">
+                    ❤️
+                    <span id="healthText">5</span>
+                </div>
+
+                <div class="hud-item">
+                    ⭐
+                    <span id="scoreText">0</span>
+                </div>
+
+                <div class="hud-item">
+                    ⏱️
+                    <span id="timeText">0</span>
+                </div>
+
+                <div class="hud-item">
+                    👾
+                    <span id="enemyText">0</span>
+                </div>
+
+                <div class="hud-item" id="ammoHud" style="display:none;">
+                    🔫
+                    <span id="ammoText">-</span>
+                </div>
+
+                <div class="hud-item" id="hordaHud" style="display:none;">
+                    🌊
+                    <span id="hordaText">0</span>
+                </div>
+
+                <div class="hud-item" id="specialHud" style="display:none;">
+                    ⚡
+                    <span id="specialText">-</span>
+                </div>
+
+            </div>
+
+            <canvas
+                id="gameCanvas"
+                width="1000"
+                height="650">
+            </canvas>
+
+        </section>
+
+
+        <!-- =========================
+                GAME OVER
+        ========================== -->
+
+        <section id="gameOver" class="screen">
+
+            <h2>GAME OVER</h2>
+
+            <p class="game-over-message">
+                Você não conseguiu sobreviver...
+            </p>
+
+            <div class="results">
+
+                <p>
+                    ⭐ Pontuação:
+                    <strong id="finalScore">0</strong>
+                </p>
+
+                <p>
+                    ⏱️ Tempo:
+                    <strong id="finalTime">0</strong>s
+                </p>
+
+                <p>
+                    🏆 Recorde:
+                    <strong id="finalHighScore">0</strong>
+                </p>
+
+            </div>
+
+            <button id="restartButton">
+                JOGAR NOVAMENTE
+            </button>
+
+            <button id="menuButton">
+                MENU
+            </button>
+
+        </section>
+
+    </div>
+
+    <script src="game.js"></script>
+
+</body>
+
+</html>
