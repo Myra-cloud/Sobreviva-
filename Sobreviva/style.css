@@ -1,0 +1,429 @@
+/* =========================================
+   CONFIGURAÇÕES GERAIS
+========================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+
+    min-height: 100vh;
+
+    background:
+        radial-gradient(circle at center, #202020, #090909);
+
+    color: white;
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    overflow-x: hidden;
+
+    overflow-y: auto;
+}
+
+
+/* =========================================
+   CONTAINER PRINCIPAL
+========================================= */
+
+.game-container {
+
+    width: 100%;
+
+    max-width: 1100px;
+
+    min-height: 700px;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    position: relative;
+}
+
+
+/* =========================================
+   TELAS
+========================================= */
+
+.screen {
+
+    display: none;
+
+    width: 100%;
+
+    min-height: 650px;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    text-align: center;
+
+    padding: 20px 0;
+}
+
+.screen.active {
+
+    display: flex;
+}
+
+
+/* =========================================
+   MENU
+========================================= */
+
+#menu h1 {
+
+    font-size: 80px;
+
+    letter-spacing: 10px;
+
+    margin-bottom: 10px;
+
+    text-shadow:
+        0 0 10px #ffffff,
+        0 0 30px #ff3030;
+}
+
+.subtitle {
+
+    font-size: 20px;
+
+    color: #cccccc;
+
+    margin-bottom: 40px;
+}
+
+
+/* =========================================
+   SELETOR DE MODO
+========================================= */
+
+.mode-select {
+
+    display: flex;
+
+    gap: 10px;
+
+    margin-bottom: 8px;
+}
+
+.modo-btn {
+
+    width: 140px;
+
+    margin: 0;
+
+    padding: 10px 14px;
+
+    font-size: 15px;
+
+    opacity: 0.55;
+}
+
+.modo-btn.active {
+
+    background: #e74c3c;
+
+    border-color: #e74c3c;
+
+    color: white;
+
+    opacity: 1;
+}
+
+.mode-desc {
+
+    max-width: 340px;
+
+    font-size: 13px;
+
+    color: #999;
+
+    margin-bottom: 25px;
+
+    min-height: 32px;
+}
+
+
+/* =========================================
+   BOTÕES
+========================================= */
+
+button {
+
+    width: 260px;
+
+    padding: 15px 20px;
+
+    margin: 8px;
+
+    border: 2px solid white;
+
+    background: #151515;
+
+    color: white;
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+
+    border-radius: 5px;
+}
+
+button:hover {
+
+    background: white;
+
+    color: black;
+
+    transform: scale(1.05);
+}
+
+button:active {
+
+    transform: scale(0.98);
+}
+
+.back-btn {
+
+    background: #e74c3c;
+
+    border-color: #e74c3c;
+
+    font-size: 20px;
+}
+
+.back-btn:hover {
+
+    background: white;
+
+    color: #e74c3c;
+
+    border-color: white;
+}
+
+
+/* =========================================
+   RECORDE
+========================================= */
+
+.record-menu {
+
+    margin-top: 25px;
+
+    color: #ffd700;
+
+    font-size: 18px;
+}
+
+
+/* =========================================
+   INSTRUÇÕES
+========================================= */
+
+#instructions h2,
+#gameOver h2 {
+
+    font-size: 50px;
+
+    margin-bottom: 30px;
+
+    letter-spacing: 5px;
+}
+
+.instructions-box {
+
+    width: 600px;
+
+    max-width: 90%;
+
+    padding: 25px;
+
+    background: rgba(20, 20, 20, 0.9);
+
+    border: 2px solid #555;
+
+    border-radius: 10px;
+
+    margin-bottom: 25px;
+}
+
+.instructions-box p {
+
+    text-align: left;
+
+    margin: 15px 0;
+
+    font-size: 17px;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================
+   HUD
+========================================= */
+
+#gameScreen {
+
+    justify-content: flex-start;
+
+    padding-top: 20px;
+}
+
+#hud {
+
+    width: 1000px;
+
+    max-width: 95%;
+
+    display: flex;
+
+    justify-content: space-between;
+
+    align-items: center;
+
+    padding: 12px 18px;
+
+    margin-bottom: 10px;
+
+    background: rgba(0, 0, 0, 0.8);
+
+    border: 2px solid #444;
+
+    border-radius: 8px;
+
+    font-size: 18px;
+
+    font-weight: bold;
+}
+
+.hud-item {
+
+    min-width: 120px;
+
+    text-align: center;
+}
+
+.hud-item#specialHud.ready {
+
+    color: #ffd700;
+
+    text-shadow: 0 0 8px #ffd700;
+}
+
+
+/* =========================================
+   CANVAS
+========================================= */
+
+#gameCanvas {
+
+    width: 1000px;
+
+    height: 650px;
+
+    max-width: 95vw;
+
+    max-height: 70vh;
+
+    background: #101010;
+
+    border: 3px solid #555;
+
+    border-radius: 5px;
+
+    cursor: crosshair;
+
+    box-shadow:
+        0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+
+/* =========================================
+   GAME OVER
+========================================= */
+
+.game-over-message {
+
+    color: #bbbbbb;
+
+    margin-bottom: 30px;
+
+    font-size: 18px;
+}
+
+.results {
+
+    margin-bottom: 25px;
+
+    font-size: 21px;
+
+    line-height: 2;
+}
+
+.results strong {
+
+    color: #ffd700;
+}
+
+
+/* =========================================
+   RESPONSIVIDADE
+========================================= */
+
+@media (max-width: 700px) {
+
+    #menu h1 {
+
+        font-size: 45px;
+
+        letter-spacing: 5px;
+    }
+
+    #instructions h2,
+    #gameOver h2 {
+
+        font-size: 35px;
+    }
+
+    #hud {
+
+        font-size: 13px;
+
+        padding: 8px;
+    }
+
+    .hud-item {
+
+        min-width: auto;
+    }
+
+    .instructions-box {
+
+        padding: 15px;
+    }
+
+}
