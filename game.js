@@ -16,6 +16,22 @@ zombie1Img.src = "asset/sZombie1_A_strip.png";
 const zombie2Img = new Image();
 zombie2Img.src = "asset/sZombie2_A_strip.png";
 
+const personagemImg = new Image();
+
+personagemImg.src = "asset/personagem_animado.png";
+
+personagemImg.onload = () => {
+    console.log("Sprite carregada!");
+    console.log("Largura:", personagemImg.naturalWidth);
+    console.log("Altura:", personagemImg.naturalHeight);
+};
+
+let quadroPersonagem = 0;
+let tempoAnimacaoPersonagem = 0;
+
+personagemImg.onerror = () => {
+    console.error("Erro ao carregar a sprite do personagem!");
+};
 let frameZombie = 0;
 let contadorFrameZombie = 0;
 
@@ -41,7 +57,7 @@ const ammoHud = $("ammoHud"), ammoText = $("ammoText"),
 ===================================================== */
 
 const VIDAS_MAX = 5;          // 5 corações
-const INTERVALO_BOSS = 300;   // boss a cada 300s (5 min) — modo normal
+const INTERVALO_BOSS = 15;   // boss a cada 300s (5 min) — modo normal
 const RAIO_ATAQUE_ESPECIAL = 160;
 const ATAQUE_ESPECIAL_COOLDOWN = 25 * 1000;
 const ATAQUE_ESPECIAL_DANO_PCT = 0.15;
@@ -446,10 +462,20 @@ function atualizarJogador(delta) {
     jogador.velocidade = jogador.velocidadeBase + (jogador.buffVel > 0 ? 1.5 : 0);
 
     if (mx !== 0 || my !== 0) {
-        const tam = Math.hypot(mx, my);
-        jogador.x += (mx / tam) * jogador.velocidade * delta;
-        jogador.y += (my / tam) * jogador.velocidade * delta;
+    tempoAnimacaoPersonagem += dt;
+
+    if (tempoAnimacaoPersonagem >= 120) {
+        quadroPersonagem = (quadroPersonagem + 1) % 4;
+        tempoAnimacaoPersonagem = 0;
     }
+
+    const tam = Math.hypot(mx, my);
+    jogador.x += (mx / tam) * jogador.velocidade * delta;
+    jogador.y += (my / tam) * jogador.velocidade * delta;
+} else {
+    tempoAnimacaoPersonagem = 0;
+    quadroPersonagem = 0;
+}
 
     limitarJogador();
 
@@ -897,28 +923,20 @@ function usarAtaqueEspecial() {
 }
 
 /* =====================================================
-    COLISÕES TIRO × ALVOS
+   COLISÕES TIRO × ALVOS
 ===================================================== */
 
 function matarInimigo(j) {
     const e = inimigos[j];
-
     score += e.pontos;
     criarParticulas(e.x, e.y, 15);
-
-    if (Math.random() < (modoJogo === MODO.DIFICIL ? 0.18 : 0.1)) {
-        criarPowerUp(e.x, e.y);
-    }
-
+    if (Math.random() < (modoJogo === MODO.DIFICIL ? 0.18 : 0.1)) criarPowerUp(e.x, e.y);
     if (e.tipo === "divisor") {
-        for (const lado of [-1, 1]) {
-            inimigos.push(
-                novoInimigo("mini", e.x + lado * 15, e.y)
-            );
-        }
+        for (const lado of [-1, 1]) inimigos.push(novoInimigo("mini", e.x + lado * 15, e.y));
     }
-
-    // Remove o inimigo sem recuperar munição.
+    if (modoJogo === MODO.DIFICIL) {
+        jogador.balas = Math.min(jogador.balasMax, jogador.balas + 1);   // mata e recarrega
+    }
     inimigos.splice(j, 1);
 }
 
@@ -1377,13 +1395,40 @@ function desenharJogador() {
         ctx.globalAlpha = 0.4;
     }
 
-    // Desenha o jogador
-    circulo(
-        jogador.x,
-        jogador.y,
-        jogador.largura / 2,
-        "#3498db"
+    // Desenha o personagem
+    if (personagemImg.complete && personagemImg.naturalWidth > 0) {
+    const dx = mouse.x - jogador.x;
+    const dy = mouse.y - jogador.y;
+
+    let linhaPersonagem;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+        linhaPersonagem = 1; // De lado
+    } else if (dy < 0) {
+        linhaPersonagem = 3; // De costas
+    } else {
+        linhaPersonagem = 0; // De frente
+    }
+
+    ctx.save();
+    ctx.translate(jogador.x, jogador.y);
+
+    // Espelha o personagem para olhar para a direita
+    if (linhaPersonagem === 1 && dx > 0) {
+        ctx.scale(-1, 1);
+    }
+
+    ctx.drawImage(
+        personagemImg,
+        quadroPersonagem * 96,
+        linhaPersonagem * 96,
+        96, 96,
+        -20, -28,
+        40, 56
     );
+
+    ctx.restore();
+}
 
     // Anel do poder de velocidade
     ctx.lineWidth = 2;
