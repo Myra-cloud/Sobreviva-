@@ -17,9 +17,8 @@ const zombie2Img = new Image();
 zombie2Img.src = "asset/sZombie2_A_strip.png";
 
 // Imagem do boss
-
 const bossImg = new Image();
-bossImg.src = "asset/boss_zumbi.png";
+bossImg.src = "asset/zumbi_boss.png";
 
 const personagemImg = new Image();
 
@@ -42,6 +41,38 @@ let contadorFrameZombie = 0;
 
 const imagemArmas = new Image();
 imagemArmas.src = "asset/armas_sprites.png";
+
+
+const sonsArmas = {
+    pistola: new Audio("sound/Pistola.m4a"),
+    escopeta: new Audio("sound/Escopeta.m4a"),
+    rifle: new Audio("sound/RifleDePrecisao.m4a"),
+    canhao: new Audio("sound/Canhao.m4a"),
+    metralhadora: new Audio("sound/Metralhadora.mp3"),
+    fuzil: new Audio("sound/FuzilDeAssalto.m4a"),
+    canhaoduplo: new Audio("sound/CanhaoDuplo.m4a")
+};
+
+const somAtaqueEspecial = new Audio("sound/ArmaLaser.m4a");
+somAtaqueEspecial.preload = "auto";
+
+const musicaFundo = new Audio("sound/MusicaFundo.mp3");
+musicaFundo.loop = true;
+musicaFundo.volume = 0.25;
+
+musicaFundo.addEventListener("canplaythrough", () => {
+    console.log("Música carregada!");
+});
+
+musicaFundo.addEventListener("error", () => {
+    console.error("Erro ao carregar a música:", musicaFundo.error);
+});
+
+for (const som of Object.values(sonsArmas)) {
+    som.preload = "auto";
+    som.load();
+}
+
 
 const menu = $("menu"), instructions = $("instructions"),
       gameScreen = $("gameScreen"), gameOver = $("gameOver");
@@ -424,15 +455,27 @@ function iniciarJogo() {
     jogador.balas = BALAS_MAX_DIFICIL;
 
     jogoRodando = true;
-    ultimoTempo = performance.now();
-    mostrarTela(gameScreen);
-    cancelAnimationFrame(frameId);
-    frameId = requestAnimationFrame(loop);
+
+// Inicia a música de fundo
+musicaFundo.currentTime = 0;
+musicaFundo.play().catch(erro => {
+    console.warn("Não foi possível iniciar a música:", erro);
+});
+
+ultimoTempo = performance.now();
+mostrarTela(gameScreen);
+cancelAnimationFrame(frameId);
+frameId = requestAnimationFrame(loop);
 }
+
 
 function finalizarJogo() {
     jogoRodando = false;
     mouse.pressionado = false;
+
+    // Para a música quando o jogador perde
+    musicaFundo.pause();
+    musicaFundo.currentTime = 0;
 
     if (score > highScore) {
         highScore = score;
@@ -527,6 +570,15 @@ function atirar() {
     const dist = Math.hypot(dx, dy);
 
     if (dist === 0) return;
+
+    const som = sonsArmas[armaAtualId];
+
+if (som) {
+    som.currentTime = 0;
+    som.play().catch(erro => {
+        console.warn("Erro ao reproduzir som:", erro);
+    });
+}
 
     const anguloBase = Math.atan2(dy, dx);
 
@@ -896,6 +948,10 @@ function usarAtaqueEspecial() {
     if (dist > boss.raio + RAIO_ATAQUE_ESPECIAL) return;
 
     const dano = boss.vidaMaxima * ATAQUE_ESPECIAL_DANO_PCT;
+    somAtaqueEspecial.currentTime = 0;
+    somAtaqueEspecial.play().catch(erro => {
+    console.warn("Erro ao reproduzir som do ataque especial:", erro);
+});
 
     boss.vida -= dano;
 
