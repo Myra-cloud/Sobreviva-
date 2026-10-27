@@ -16,6 +16,11 @@ zombie1Img.src = "asset/sZombie1_A_strip.png";
 const zombie2Img = new Image();
 zombie2Img.src = "asset/sZombie2_A_strip.png";
 
+// Imagem do boss
+
+const bossImg = new Image();
+bossImg.src = "asset/boss_zumbi.png";
+
 const personagemImg = new Image();
 
 personagemImg.src = "asset/personagem_animado.png";
@@ -1616,18 +1621,37 @@ function desenharPowerUps() {
     }
 }
 
+
+
 function desenharBoss() {
     if (!boss) return;
 
-    circulo(boss.x, boss.y, boss.raio, "#d35400");
-    ctx.strokeStyle = "#f1c40f";
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(boss.x, boss.y, boss.raio, 0, Math.PI * 2);
-    ctx.stroke();
+    const tamanhoBoss = boss.raio * 3;
 
-    const largura = 300, x = canvas.width / 2 - largura / 2, y = 30;
-    barraVida(x, y, largura, 20, boss.vida / boss.vidaMaxima, "#e74c3c");
+    // Desenha o boss somente se a imagem estiver carregada
+    if (bossImg.complete && bossImg.naturalWidth > 0) {
+        ctx.drawImage(
+            bossImg,
+            boss.x - tamanhoBoss / 2,
+            boss.y - tamanhoBoss / 2,
+            tamanhoBoss,
+            tamanhoBoss
+        );
+    }
+
+    const largura = 300;
+    const x = canvas.width / 2 - largura / 2;
+    const y = 30;
+
+    barraVida(
+        x,
+        y,
+        largura,
+        20,
+        boss.vida / boss.vidaMaxima,
+        "#e74c3c"
+    );
+
     ctx.strokeStyle = "white";
     ctx.lineWidth = 2;
     ctx.strokeRect(x, y, largura, 20);
@@ -1638,6 +1662,7 @@ function desenharBoss() {
     ctx.textBaseline = "alphabetic";
     ctx.fillText(`👑 BOSS ${boss.nivel}`, canvas.width / 2, y - 6);
 }
+
 
 function desenharOndas() {
     ctx.lineWidth = 6;
