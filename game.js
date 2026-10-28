@@ -93,7 +93,7 @@ const ammoHud = $("ammoHud"), ammoText = $("ammoText"),
 ===================================================== */
 
 const VIDAS_MAX = 5;          // 5 corações
-const INTERVALO_BOSS = 15;   // boss a cada 300s (5 min) — modo normal
+const INTERVALO_BOSS = 300;   // boss a cada 300s (5 min) — modo normal
 const RAIO_ATAQUE_ESPECIAL = 160;
 const ATAQUE_ESPECIAL_COOLDOWN = 25 * 1000;
 const ATAQUE_ESPECIAL_DANO_PCT = 0.15;
