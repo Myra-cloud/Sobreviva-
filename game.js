@@ -18,7 +18,7 @@ zombie2Img.src = "asset/sZombie2_A_strip.png";
 
 // Imagem do boss
 const bossImg = new Image();
-bossImg.src = "asset/zumbi_boss.png";
+bossImg.src = "asset/Boss.png";
 
 const personagemImg = new Image();
 
@@ -47,7 +47,7 @@ const sonsArmas = {
     pistola: new Audio("sound/Pistola.m4a"),
     escopeta: new Audio("sound/Escopeta.m4a"),
     rifle: new Audio("sound/RifleDePrecisao.m4a"),
-    canhao: new Audio("sound/Canhao.m4a"),
+    canhao: new Audio("sound/CanhaoPerfurante.m4a"),
     metralhadora: new Audio("sound/Metralhadora.mp3"),
     fuzil: new Audio("sound/FuzilDeAssalto.m4a"),
     canhaoduplo: new Audio("sound/CanhaoDuplo.m4a")
@@ -55,6 +55,9 @@ const sonsArmas = {
 
 const somAtaqueEspecial = new Audio("sound/ArmaLaser.m4a");
 somAtaqueEspecial.preload = "auto";
+
+const somExplosao = new Audio("sound/powerupExplosao.mp3")
+somExplosao.preload = "auto";
 
 const musicaFundo = new Audio("sound/MusicaFundo.mp3");
 musicaFundo.loop = true;
@@ -73,6 +76,18 @@ for (const som of Object.values(sonsArmas)) {
     som.load();
 }
 
+
+let quadroBoss = 0;
+let tempoAnimacaoBoss = 0;
+let bossAndando = false;
+let tempoAtaqueBoss = 0;
+let bossMorrendo = false;
+let quadroMorteBoss = 0;
+let tempoMorteBoss = 0;
+const duracaoAnimacaoAtaqueBoss = 600;
+const intervaloAnimacaoBoss = 150;
+const larguraQuadroBoss = 256;
+const alturaQuadroBoss = 256;
 
 const menu = $("menu"), instructions = $("instructions"),
       gameScreen = $("gameScreen"), gameOver = $("gameOver");
@@ -863,6 +878,7 @@ function criarBoss() {
 /* Alterna: leque de 3 tiros mirados no jogador / anel de tiros */
 function bossAtirar() {
     boss.ataques++;
+    tempoAtaqueBoss = duracaoAnimacaoAtaqueBoss;
     const mirar = Math.atan2(jogador.y - boss.y, jogador.x - boss.x);
 
     if (boss.ataques % 2 === 1) {
@@ -881,31 +897,54 @@ function bossAtirar() {
 function atualizarBoss(delta) {
     if (!boss) return;
 
+    // Impede ações enquanto o boss está morrendo
+    if (bossMorrendo) {
+        bossAndando = false;
+        return;
+    }
+
+    tempoAtaqueBoss = Math.max(
+        0,
+        tempoAtaqueBoss - delta * 16.67
+    );
+
     if (!boss.entrouNaArena) {
         boss.y += boss.velocidade * 2 * delta;
-        if (boss.y >= 100) boss.entrouNaArena = true;
+
+        if (boss.y >= 100) {
+            boss.entrouNaArena = true;
+        }
+
         return;
     }
 
     boss.recarga -= delta * 16.67;
+
     if (boss.recarga <= 0) {
         bossAtirar();
         boss.recarga = Math.max(1800, 3500 - 250 * (boss.nivel - 1));
     }
 
-    if (boss.pausa > 0) { boss.pausa -= delta * 16.67; return; }
+    if (boss.pausa > 0) {
+        bossAndando = false;
+        boss.pausa -= delta * 16.67;
+        return;
+    }
 
     const dx = jogador.x - boss.x;
     const dy = jogador.y - boss.y;
     const dist = Math.hypot(dx, dy);
 
+    bossAndando = false;
+
     if (dist > 0) {
+        bossAndando = true;
+
         boss.x += (dx / dist) * boss.velocidade * delta;
         boss.y += (dy / dist) * boss.velocidade * delta;
     }
 
     if (dist < boss.raio + jogador.largura / 2) {
-        /* Dá dano, empurra o jogador e o boss fica parado um instante */
         if (causarDanoJogador(boss.dano, 1500) && jogoRodando) {
             jogador.x += (dx / dist) * 140;
             jogador.y += (dy / dist) * 140;
@@ -1002,13 +1041,29 @@ function matarInimigo(j) {
 }
 
 function derrotarBoss() {
+    if (bossMorrendo) return;
+
+    bossMorrendo = true;
+    quadroMorteBoss = 0;
+    tempoMorteBoss = 0;
+
+    bossAndando = false;
+    tempoAtaqueBoss = 0;
+
+    tirosInimigos = [];
+}
+
+function finalizarDerrotaBoss() {
     score += boss.pontos;
     criarParticulas(boss.x, boss.y, 50);
-    criarPowerUp(boss.x, boss.y, "vida");   // boss sempre solta coração
-    boss = null;
-    tirosInimigos = [];
+    criarPowerUp(boss.x, boss.y, "vida");
 
-    if (modoJogo === MODO.DIFICIL) jogador.balas = jogador.balasMax;   // recarrega tudo
+    boss = null;
+    bossMorrendo = false;
+
+    if (modoJogo === MODO.DIFICIL) {
+        jogador.balas = jogador.balasMax;
+    }
 
     nivel++;
     mostrarAviso(`BOSS DERROTADO! NÍVEL ${nivel}\nDIFICULDADE AUMENTOU!`, 3000);
@@ -1289,22 +1344,41 @@ function atualizarPowerUps(delta) {
 const RAIO_EXPLOSAO = 280;
 
 /* Explosão: machuca tudo em volta do jogador e apaga os tiros inimigos */
+
 function explosaoEspecial() {
-    ondas.push({ x: jogador.x, y: jogador.y, tempo: 450 });
+    // Toca o som da explosão
+    somExplosao.currentTime = 0;
+
+    somExplosao.play().catch(erro => {
+        console.warn("Erro ao reproduzir som da explosão:", erro);
+    });
+
+    ondas.push({
+        x: jogador.x,
+        y: jogador.y,
+        tempo: 450
+    });
 
     for (let i = inimigos.length - 1; i >= 0; i--) {
         const e = inimigos[i];
+
         if (Math.hypot(e.x - jogador.x, e.y - jogador.y) < RAIO_EXPLOSAO + e.raio) {
             e.vida -= 150;
             criarParticulas(e.x, e.y, 6);
-            if (e.vida <= 0) matarInimigo(i);
+
+            if (e.vida <= 0) {
+                matarInimigo(i);
+            }
         }
     }
 
     if (boss && Math.hypot(boss.x - jogador.x, boss.y - jogador.y) < RAIO_EXPLOSAO + boss.raio) {
         boss.vida -= 300;
         criarParticulas(boss.x, boss.y, 15);
-        if (boss.vida <= 0) derrotarBoss();
+
+        if (boss.vida <= 0) {
+            derrotarBoss();
+        }
     }
 
     tirosInimigos = [];
@@ -1684,16 +1758,33 @@ function desenharBoss() {
 
     const tamanhoBoss = boss.raio * 3;
 
-    // Desenha o boss somente se a imagem estiver carregada
     if (bossImg.complete && bossImg.naturalWidth > 0) {
+
+        const quadroAtual = bossMorrendo ? quadroMorteBoss : quadroBoss;
+
+        const linhaAtual = bossMorrendo
+            ? alturaQuadroBoss * 3
+            : tempoAtaqueBoss > 0
+                ? alturaQuadroBoss * 2
+                : bossAndando
+                    ? alturaQuadroBoss
+                    : 0;
+
         ctx.drawImage(
             bossImg,
+            quadroAtual * larguraQuadroBoss,
+            linhaAtual,
+            larguraQuadroBoss,
+            alturaQuadroBoss,
             boss.x - tamanhoBoss / 2,
             boss.y - tamanhoBoss / 2,
             tamanhoBoss,
             tamanhoBoss
         );
     }
+
+    // Durante a morte, não desenha a barra de vida
+    if (bossMorrendo) return;
 
     const largura = 300;
     const x = canvas.width / 2 - largura / 2;
@@ -1719,6 +1810,34 @@ function desenharBoss() {
     ctx.fillText(`👑 BOSS ${boss.nivel}`, canvas.width / 2, y - 6);
 }
 
+function atualizarAnimacaoBoss(delta) {
+    const tempo = delta * 16.67;
+
+    // Animação de morte
+    if (bossMorrendo) {
+        tempoMorteBoss += tempo;
+
+        if (tempoMorteBoss >= intervaloAnimacaoBoss) {
+            quadroMorteBoss++;
+            tempoMorteBoss = 0;
+
+            // Terminou os 6 quadros da morte
+            if (quadroMorteBoss >= 6) {
+                finalizarDerrotaBoss();
+            }
+        }
+
+        return;
+    }
+
+    // Animações normais
+    tempoAnimacaoBoss += tempo;
+
+    if (tempoAnimacaoBoss >= intervaloAnimacaoBoss) {
+        quadroBoss = (quadroBoss + 1) % 6;
+        tempoAnimacaoBoss = 0;
+    }
+}
 
 function desenharOndas() {
     ctx.lineWidth = 6;
@@ -1847,6 +1966,7 @@ function loop(agora) {
     ultimoTempo = agora;
 
     atualizar(delta);
+    atualizarAnimacaoBoss(delta); 
     desenhar();
     atualizarHUD();
 
