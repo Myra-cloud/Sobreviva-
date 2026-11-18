@@ -40,6 +40,51 @@ let frameZombie = 0;
 let contadorFrameZombie = 0;
 
 const imagemArmas = new Image();
+const imagemPedregulhoBoss = new Image();
+const imagemChao = new Image();
+imagemChao.src = "asset/chao_arena.png";
+imagemPedregulhoBoss.src = "asset/pedregulho_boss.png";
+
+const projeteisSprites = {
+    pistola: {
+        x: 135, y: 575, largura: 50, altura: 165
+    },
+
+    escopeta: {
+        x: 330, y: 600, largura: 65, altura: 125
+    },
+
+    rifle: {
+        x: 550, y: 570, largura: 75, altura: 170
+    },
+
+    canhao: {
+        x: 1300, y: 575, largura: 140, altura: 165
+    },
+
+    metralhadora: {
+        x: 815, y: 610, largura: 65, altura: 120
+    },
+
+    fuzil: {
+        x: 1050, y: 600, largura: 75, altura: 140
+    },
+
+    canhaoduplo: {
+        x: 1300, y: 575, largura: 140, altura: 165
+    }
+};
+const impactosSprites = {
+    pistola: { x: 450, y: 830, largura: 110, altura: 125 },
+    escopeta: { x: 450, y: 830, largura: 110, altura: 125 },
+
+    rifle: { x: 970, y: 810, largura: 110, altura: 165 },
+    metralhadora: { x: 970, y: 810, largura: 110, altura: 165 },
+    fuzil: { x: 970, y: 810, largura: 110, altura: 165 },
+
+    canhao: { x: 695, y: 810, largura: 155, altura: 160 },
+    canhaoduplo: { x: 695, y: 810, largura: 155, altura: 160 }
+};
 imagemArmas.src = "asset/armas_sprites.png";
 
 
@@ -123,7 +168,15 @@ let modoJogo = MODO.NORMAL;
    A cada HORDAS_POR_BOSS hordas, aparece um boss em vez de uma horda normal. */
 const ORDEM_TIPOS_DIFICIL = ["normal", "rapido", "tanque", "zigzag", "divisor", "atirador"];
 const HORDAS_POR_NOVO_TIPO = 2;
-const BALAS_MAX_DIFICIL = 12;   // munição máxima no modo difícil
+const BALAS_MAX_DIFICIL = {
+    pistola: 24,
+    escopeta: 12,
+    rifle: 16,
+    canhao: 50,
+    metralhadora: 200,
+    fuzil: 45,
+    canhaoduplo: 10
+};
 const INTERVALO_MUNICAO = 12000;   // a cada ~12s garante uma munição extra no mapa (modo difícil)
 
 let horda = 0;
@@ -228,11 +281,11 @@ const ARMAS = [
     {
         id: "escopeta",
         nome: "Escopeta",
-        desc: "3 tiros espalhados; ótima de perto",
-        dano: 14,
+        desc: "4 tiros espalhados; ótima de perto",
+        dano: 24,
         intervaloTiro: 300,
-        tiros: 3,
-        espalhamento: 0.55,
+        tiros: 4,
+        espalhamento: 0.15,
         velTiro: 9,
         perfurante: false,
         emoji: "💥"
@@ -241,7 +294,7 @@ const ARMAS = [
         id: "rifle",
         nome: "Rifle de Precisão",
         desc: "Tiros mais fortes e precisos",
-        dano: 60,
+        dano: 75,
         intervaloTiro: 350,
         tiros: 1,
         espalhamento: 0,
@@ -253,7 +306,7 @@ const ARMAS = [
         id: "canhao",
         nome: "Canhão Perfurante",
         desc: "Os tiros atravessam inimigos",
-        dano: 35,
+        dano: 55,
         intervaloTiro: 280,
         tiros: 1,
         espalhamento: 0,
@@ -265,7 +318,7 @@ const ARMAS = [
         id: "metralhadora",
         nome: "Metralhadora Pesada",
         desc: "Dispara muito rapidamente",
-        dano: 10,
+        dano: 25,
         intervaloTiro: 70,
         tiros: 1,
         espalhamento: 0,
@@ -277,7 +330,7 @@ const ARMAS = [
         id: "fuzil",
         nome: "Fuzil de Assalto",
         desc: "Equilíbrio entre dano e velocidade",
-        dano: 24,
+        dano: 34,
         intervaloTiro: 130,
         tiros: 1,
         espalhamento: 0,
@@ -289,7 +342,7 @@ const ARMAS = [
         id: "canhaoduplo",
         nome: "Canhão Duplo Perfurante",
         desc: "2 tiros perfurantes simultâneos",
-        dano: 25,
+        dano: 45,
         intervaloTiro: 250,
         tiros: 2,
         espalhamento: 0.25,
@@ -334,7 +387,7 @@ let aviso = { texto: "", tempo: 0 };
 let tiposAvisados = new Set();
 
 let ondas = [];
-let tiros = [], tirosInimigos = [], inimigos = [], powerUps = [], particulas = [];
+let tiros = [], tirosInimigos = [], inimigos = [], powerUps = [], particulas = [], impactos = [];
 
 
 let highScore = Number(localStorage.getItem("sobrevivaHighScore")) || 0;
@@ -353,7 +406,8 @@ const jogador = {
     perfurante: false,  
     invulneravel: 0,
     buffVel: 0,                 // tempo restante do power-up de velocidade (ms)
-    balas: BALAS_MAX_DIFICIL, balasMax: BALAS_MAX_DIFICIL   // só usado no modo difícil
+    balas: BALAS_MAX_DIFICIL.pistola,
+    balasMax: BALAS_MAX_DIFICIL.pistola   // só usado no modo difícil
 };
 
 /* =====================================================
@@ -466,8 +520,8 @@ function iniciarJogo() {
     jogador.vida = VIDAS_MAX;
     jogador.cooldownTiro = 0; jogador.invulneravel = 0;
     jogador.buffVel = 0;
-    jogador.balasMax = BALAS_MAX_DIFICIL;
-    jogador.balas = BALAS_MAX_DIFICIL;
+    jogador.balasMax = BALAS_MAX_DIFICIL.pistola;
+    jogador.balas = jogador.balasMax;
 
     jogoRodando = true;
 
@@ -616,6 +670,7 @@ if (som) {
 
             raio: 5,
             dano: jogador.dano,
+            arma: armaAtualId,
 
             perfurante: jogador.perfurante,
             acertados: new Set()
@@ -624,9 +679,17 @@ if (som) {
 
     jogador.cooldownTiro = jogador.intervaloTiro;
 
-    if (modoJogo === MODO.DIFICIL) {
-        jogador.balas--;
+   if (modoJogo === MODO.DIFICIL) {
+    jogador.balas--;
+
+    const armaEquipada = armasEquipadas.find(
+        arma => arma.id === armaAtualId
+    );
+
+    if (armaEquipada) {
+        armaEquipada.balas = jogador.balas;
     }
+}
 }
 
 function atualizarTiros(delta) {
@@ -678,6 +741,9 @@ function novoInimigo(tipo, x, y) {
     };
 }
 
+const MAX_INIMIGOS_NORMAL = 25;
+const MAX_INIMIGOS_DIFICIL = 15;
+
 function criarInimigo() {
     const lado = Math.floor(Math.random() * 4);
     let x, y;
@@ -686,7 +752,13 @@ function criarInimigo() {
     else if (lado === 2) { x = Math.random() * canvas.width; y = canvas.height + 40; }
     else { x = -40; y = Math.random() * canvas.height; }
 
-    inimigos.push(novoInimigo(escolherTipo(), x, y));
+    const limite = modoJogo === MODO.DIFICIL
+    ? MAX_INIMIGOS_DIFICIL
+    : MAX_INIMIGOS_NORMAL;
+
+if (inimigos.length >= limite) return;
+
+inimigos.push(novoInimigo(escolherTipo(), x, y));
 }
 
 function atualizarInimigos(delta) {
@@ -736,23 +808,47 @@ function atualizarInimigos(delta) {
     }
 }
 
-function dispararInimigo(x, y, angulo, vel, raio, cor) {
+function dispararInimigo(x, y, angulo, vel, raio, cor, tipo = "normal") {
     tirosInimigos.push({
-        x, y, raio, cor,
-        vx: Math.cos(angulo) * vel, vy: Math.sin(angulo) * vel
+        x, y, raio, cor, tipo,
+        frame: 0,
+        tempoFrame: 0,
+        vx: Math.cos(angulo) * vel,
+        vy: Math.sin(angulo) * vel
     });
 }
 
 function atualizarTirosInimigos(delta) {
     for (let i = tirosInimigos.length - 1; i >= 0; i--) {
         const t = tirosInimigos[i];
+       if (t.tipo === "pedregulho" && t.frame < 6) {
+        t.tempoFrame += delta * 16.67;
+
+        if (t.tempoFrame >= 300) {
+            t.frame++;
+            t.tempoFrame = 0;
+        }
+    }
+
         t.x += t.vx * delta;
-        t.y += t.vy * delta;
+        t.y += t.vy * delta;    
 
         if (Math.hypot(jogador.x - t.x, jogador.y - t.y) < t.raio + jogador.largura / 2) {
-            causarDanoJogador(1);
-            tirosInimigos.splice(i, 1);
-        } else if (t.x < -20 || t.x > canvas.width + 20 || t.y < -20 || t.y > canvas.height + 20) {
+
+    causarDanoJogador(1);
+
+    if (t.tipo === "pedregulho") {
+        impactos.push({
+            x: t.x,
+            y: t.y,
+            tempo: 0,
+            duracao: 300,
+            tipo: "pedregulho"
+        });
+    }
+
+    tirosInimigos.splice(i, 1);
+} else if (t.x < -20 || t.x > canvas.width + 20 || t.y < -20 || t.y > canvas.height + 20) {
             tirosInimigos.splice(i, 1);
         }
     }
@@ -810,7 +906,9 @@ function iniciarProximaHorda() {
 
     hordaEmAndamento = true;
     hordaInimigosGerados = 0;
-    hordaInimigosAlvo = 10 + (horda - 1) * 10;   // 10, 20, 30, 40... (a cada horda, +10 inimigos)
+    hordaInimigosAlvo = modoJogo === MODO.DIFICIL
+    ? 8 + (horda - 1) * 5
+    : 10 + (horda - 1) * 10;
     hordaSpawnTimer = 0;
     mostrarAviso(`HORDA ${horda}`, 1600, true);
 }
@@ -846,8 +944,10 @@ function atualizarHordas(delta) {
     if (hordaSpawnTimer <= 0) {
         criarInimigo();
         hordaInimigosGerados++;
-        hordaSpawnTimer = Math.max(250, 600 - horda * 15);
-    }
+        hordaSpawnTimer = modoJogo === MODO.DIFICIL
+        ? Math.max(450, 850 - horda * 10)
+        : Math.max(250, 600 - horda * 15);
+        }
 }
 
 /* =====================================================
@@ -883,13 +983,13 @@ function bossAtirar() {
 
     if (boss.ataques % 2 === 1) {
         for (const desvio of [-0.25, 0, 0.25]) {
-            dispararInimigo(boss.x, boss.y, mirar + desvio, 3.5, 8, "#ff9f43");
+            dispararInimigo(boss.x, boss.y, mirar + desvio, 3.5, 8, "#ff9f43", "pedregulho");
         }
     } else {
         const qtd = Math.min(8 + boss.nivel * 2, 16);
         const giro = Math.random() * Math.PI;
         for (let i = 0; i < qtd; i++) {
-            dispararInimigo(boss.x, boss.y, giro + (i / qtd) * Math.PI * 2, 3, 8, "#ff9f43");
+            dispararInimigo(boss.x, boss.y, giro + (i / qtd) * Math.PI * 2, 3, 8, "#ff9f43", "pedregulho");
         }
     }
 }
@@ -1034,9 +1134,7 @@ function matarInimigo(j) {
     if (e.tipo === "divisor") {
         for (const lado of [-1, 1]) inimigos.push(novoInimigo("mini", e.x + lado * 15, e.y));
     }
-    if (modoJogo === MODO.DIFICIL) {
-        jogador.balas = Math.min(jogador.balasMax, jogador.balas + 1);   // mata e recarrega
-    }
+    
     inimigos.splice(j, 1);
 }
 
@@ -1172,6 +1270,15 @@ function trocarArma(indice) {
 
     armaAtualId = arma.id;
 
+    if (modoJogo === MODO.DIFICIL) {
+    if (arma.balas === undefined) {
+        arma.balas = BALAS_MAX_DIFICIL[armaAtualId];
+    }
+
+    jogador.balasMax = BALAS_MAX_DIFICIL[armaAtualId];
+    jogador.balas = arma.balas;
+}
+
     jogador.dano = arma.dano;
     jogador.intervaloTiro = arma.intervaloTiro;
     jogador.tirosPorDisparo = arma.tiros;
@@ -1261,6 +1368,8 @@ function verificarColisoes() {
 
                 e.vida -= t.dano;
 
+                criarImpacto(t.x, t.y, t.arma);
+
                 t.acertados.add(e);
 
                 criarParticulas(t.x, t.y, 4);
@@ -1288,6 +1397,8 @@ function verificarColisoes() {
         ) {
 
             boss.vida -= t.dano;
+
+            criarImpacto(t.x, t.y, t.arma);
 
             t.acertados.add(boss);
 
@@ -1395,6 +1506,78 @@ function aplicarPowerUp(tipo) {
    PARTÍCULAS
 ===================================================== */
 
+function criarImpacto(x, y, arma) {
+
+    impactos.push({
+        x: x,
+        y: y,
+        arma: arma,
+        tempo: 0,
+        duracao: 250,
+        tipo: "arma"
+    });
+}
+
+function atualizarImpactos(delta) {
+    for (let i = impactos.length - 1; i >= 0; i--) {
+
+        const impacto = impactos[i];
+
+        impacto.tempo += delta * 16.67;
+
+        if (impacto.tempo >= impacto.duracao) {
+            impactos.splice(i, 1);
+        }
+    }
+}
+
+function desenharImpactos() {
+    for (const impacto of impactos) {
+        if (impacto.tipo === "pedregulho") {
+
+    ctx.drawImage(
+        imagemPedregulhoBoss,
+        1152,
+        512,
+        384,
+        512,
+        impacto.x - 30,
+        impacto.y - 30,
+        60,
+        60
+    );
+
+        continue;
+    }
+
+        const sprite = impactosSprites[impacto.arma];
+
+        if (!sprite || !imagemArmas.complete) continue;
+        console.log("DESENHANDO IMPACTO:", sprite, imagemArmas.complete);
+
+        const progresso = impacto.tempo / impacto.duracao;
+        const tamanho = 45 * (1 + progresso * 0.4);
+
+        ctx.save();
+
+        ctx.globalAlpha = 1;
+
+        ctx.drawImage(
+            imagemArmas,
+            sprite.x,
+            sprite.y,
+            sprite.largura,
+            sprite.altura,
+            impacto.x - tamanho / 2,
+            impacto.y - tamanho / 2,
+            tamanho,
+            tamanho
+        );
+
+        ctx.restore();
+    }
+}
+
 function criarParticulas(x, y, quantidade) {
     for (let i = 0; i < quantidade; i++) {
         const ang = Math.random() * Math.PI * 2;
@@ -1474,6 +1657,7 @@ function atualizar(delta) {
     verificarDesbloqueioEspecial();
     verificarColisoes();
     atualizarParticulas(delta);
+    atualizarImpactos(delta);
     for (let i = ondas.length - 1; i >= 0; i--) {
         ondas[i].tempo -= delta * 16.67;
         if (ondas[i].tempo <= 0) ondas.splice(i, 1);
@@ -1507,17 +1691,20 @@ function barraVida(x, y, largura, altura, pct, cor) {
 }
 
 function desenharFundo() {
-    ctx.fillStyle = "#101010";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.strokeStyle = "rgba(255,255,255,0.04)";
-    ctx.lineWidth = 1;
-    for (let x = 0; x <= canvas.width; x += 50) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    if (imagemChao.complete && imagemChao.naturalWidth > 0) {
+        ctx.drawImage(
+            imagemChao,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+    } else {
+        ctx.fillStyle = "#101010";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
-    for (let y = 0; y <= canvas.height; y += 50) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-    }
+
 }
 
 function desenharJogador() {
@@ -1599,13 +1786,13 @@ function desenharJogador() {
                 x: 105, y: 240, largura: 90, altura: 220
             },
             escopeta: {
-            x: 110, y: 140, largura: 65, altura: 375
+                x: 320, y: 140, largura: 90, altura: 375
             },
             rifle: {
-                x: 320, y: 65, largura: 100, altura: 445
+                x: 535, y: 65, largura: 120, altura: 445
             },
             canhao: {
-                x: 535, y: 65, largura: 120, altura: 445
+                x: 1280, y: 150, largura: 170, altura: 365
             },
             metralhadora: {
                 x: 780, y: 100, largura: 140, altura: 410
@@ -1851,9 +2038,65 @@ function desenharOndas() {
 }
 
 function desenharTiros() {
-    for (const t of tiros) circulo(t.x, t.y, t.raio, "#ffff00");
-    for (const t of tirosInimigos) circulo(t.x, t.y, t.raio, t.cor);
+
+    for (const t of tiros) {
+
+        const sprite = projeteisSprites[t.arma];
+
+        if (sprite && imagemArmas.complete) {
+            ctx.save();
+
+ctx.translate(t.x, t.y);
+ctx.rotate(Math.atan2(t.vy, t.vx) + Math.PI / 2);
+
+ctx.drawImage(
+    imagemArmas,
+    sprite.x,
+    sprite.y,
+    sprite.largura,
+    sprite.altura,
+    -8,
+    -15,
+    16,
+    30
+);
+
+ctx.restore();
+        }
+    }
+
+    for (const t of tirosInimigos) {
+
+    if (t.tipo === "pedregulho" && imagemPedregulhoBoss.complete) {
+
+        const coluna = t.frame % 4;
+        const linha = Math.floor(t.frame / 4);
+
+        ctx.save();
+
+        ctx.translate(t.x, t.y);
+        ctx.rotate(Math.atan2(t.vy, t.vx) + Math.PI);
+
+        ctx.drawImage(
+            imagemPedregulhoBoss,
+            coluna * 384,
+            linha * 512,
+            384,
+            512,
+            -26,
+            -26,
+            62,
+            62
+        );
+
+        ctx.restore();
+
+    } else {
+        circulo(t.x, t.y, t.raio, t.cor);
+    }
 }
+}
+
 
 function desenharParticulas() {
     for (const p of particulas) {
@@ -1925,6 +2168,7 @@ function desenhar() {
     desenharTiros();
     desenharInimigos();
     desenharBoss();
+    desenharImpactos();
     desenharParticulas();
     desenharGolpes();
     desenharOndas();
